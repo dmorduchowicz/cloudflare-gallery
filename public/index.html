@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cloudflare Image Gallery</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 2rem;
+      background: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: #fff;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      position: relative;
+      transition: box-shadow 0.3s ease;
+    }
+    .card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+    .card img {
+      width: 100%;
+      height: auto;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    .variant-buttons {
+      display: none;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+    .card:hover .variant-buttons {
+      display: flex;
+    }
+    .variant-buttons button {
+      flex: 1 1 30%;
+      padding: 0.4rem;
+      font-size: 0.8rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .variant-buttons button:hover {
+      background-color: #0056b3;
+    }
+    .image-id {
+      font-size: 0.8rem;
+      color: #666;
+      word-break: break-word;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Your Cloudflare Image Gallery</h1>
+  <div class="grid" id="imageGrid"></div>
+
+  <script>
+    const ACCOUNT_HASH = "c359fb42f2d1ce65dd70c9730ce7fdd6"; // <-- change this
+    const VARIANTS = ["public", "thumb"]; // <-- only use variants you have defined
+    const DEFAULT_VARIANT = "thumb";
+
+    const grid = document.getElementById("imageGrid");
+
+    async function loadImages() {
+      try {
+        const response = await fetch("/api/images");
+        const data = await response.json();
+        const images = data.result;
+
+        if (!images || images.length === 0) {
+          grid.innerHTML = "<p>No images found in your Cloudflare Images account.</p>";
+          return;
+        }
+
+        images.forEach(image => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const img = document.createElement("img");
+          img.src = `https://imagedelivery.net/${ACCOUNT_HASH}/${image.id}/${DEFAULT_VARIANT}`;
+          img.alt = image.filename || image.id;
+          img.onerror = () => {
+            img.style.display = "none";
+            console.error(`Image failed: ${image.id}`);
+          };
+
+          const buttonContainer = document.createElement("div");
+          buttonContainer.className = "variant-buttons";
+
+          VARIANTS.forEach(variant => {
+            const url = `https://imagedelivery.net/${ACCOUNT_HASH}/${image.id}/${variant}`;
+            const button = document.createElement("button");
+            button.textContent = variant;
+            button.onclick = () => {
+              navigator.clipboard.writeText(url);
+              button.textContent = "Copied!";
+              setTimeout(() => (button.textContent = variant), 2000);
+            };
+            buttonContainer.appendChild(button);
+          });
+
+          const idText = document.createElement("div");
+          idText.className = "image-id";
+          idText.textContent = image.id;
+
+          card.appendChild(img);
+          card.appendChild(buttonContainer);
+          card.appendChild(idText);
+          grid.appendChild(card);
+        });
+      } catch (error) {
+        console.error("Image load failed:", error);
+        grid.innerHTML = "<p style='color:red;'>Could not load images.</p>";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", loadImages);
+  </script>
+</body>
+</html>
