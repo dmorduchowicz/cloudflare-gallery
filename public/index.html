@@ -96,6 +96,7 @@
 
           const img = document.createElement("img");
           img.src = `https://imagedelivery.net/${ACCOUNT_HASH}/${image.id}/${DEFAULT_VARIANT}`;
+          console.log("line 99 image src "+img.src);
           img.alt = image.filename || image.id;
           img.onerror = () => {
             img.style.display = "none";
