@@ -85,7 +85,8 @@
       try {
         const response = await fetch("/api/images");
         const data = await response.json();
-        const images = data.result;
+        const images = data.result.images;
+
 
         if (!images || images.length === 0) {
           grid.innerHTML = "<p>No images found in your Cloudflare Images account.</p>";
